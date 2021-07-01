@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Playground</title>
+</head>
+<body>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/snap.svg/0.5.1/snap.svg.js"></script>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <div class="col p-0 m-0" style="max-width:200px;">
+            <div class="row p-0 m-0">
+                <a class="navbar-brand" href="#">Graph Playground</a>
+                <a class="navbar-brand" style="color: blue; font-size:0.8em;" href="https://github.com/ege-on/graph-visualizer">GitHub</a>
+            </div>
+        </div>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    Developed for the SWE599 course with <a href="https://www.cmpe.boun.edu.tr/~bingol">Haluk O. Bingöl</a> advising.
+                </li>
+            </ul>
+        </div>
+        <input class="border border-round" type="file" id="markovFile" value="Import"/>
+        <button type="button" class="btn btn-success m-2" onclick="loadGraph();">Load Markov Chain</button>
+        <button type="button" class="btn btn-success m-2" onclick="saveGraph();">Save Markov Chain</button>
+    </div>
+</nav>
+
+<div class="row m-0 p-0" style="min-height:550px;">
+    <div class="col">
+        <div class="row border border-info rounded m-3 h-100" id="playground_border">
+            <svg
+                    id="svgout"
+                    style="width:100%;height:100%;padding:0;"
+            ></svg>
+        </div>
+    </div>
+    <div class="col">
+        <div class="border border-info rounded h-100 mr-3 mt-3" id="pbgr">
+            <div class="row p-2">
+                <div class="col">
+                    <button type="button" class="btn btn-primary m-2" onclick='togglePanel("createNodePanel")'>Create
+                        Node
+                    </button>
+                    <button type="button" class="btn btn-primary m-2" onclick="createArcFromPanel();">Create Arc
+                    </button>
+                    <button type="button" id="animButtonStart" class="btn btn-primary m-2"
+                            onclick="startAnimation_();">Animate
+                    </button>
+                    <button hidden type="button" id="animButtonStop" class="btn btn-warning m-2"
+                            onclick="stopAnimation_();">Stop Animation
+                    </button>
+                    <div class="border" style="float:right;">
+                        <label for="animSpeed">Animation Speed</label><br>
+                        <div class="row m-0 p-0">
+                            <div class="col m-0 p-0">?<br><input type="radio" id="spmax" name="animSpeed"
+                                                                 onclick="changeSpeed(1/5);" value="max"></div>
+                            <div class="col m-0 p-0">1<br><input type="radio" id="sp1" name="animSpeed"
+                                                                 onclick="changeSpeed(1);" value="1"></div>
+                            <div class="col m-0 p-0">2<br><input type="radio" id="sp2" name="animSpeed"
+                                                                 onclick="changeSpeed(2);" value="2"></div>
+                            <div class="col m-0 p-0">3<br><input type="radio" id="sp3" name="animSpeed"
+                                                                 onclick="changeSpeed(3);" value="3"></div>
+                            <div class="col m-0 p-0">4<br><input type="radio" id="sp4" name="animSpeed"
+                                                                 onclick="changeSpeed(4);" value="4"></div>
+                            <div class="col m-0 p-0">5<br><input type="radio" id="sp5" name="animSpeed"
+                                                                 onclick="changeSpeed(5);" value="5"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <hr class="m-0">
+            <!-- Node creation panel -->
+            <div class="row border border-warning m-2 p-2" id="createNodePanel" hidden="true">
+                <div class="col m-0">
+                    <h4>Create Node</h4>
+                    <hr>
+                    <label for="nodeNameCreate">Node Name: </label>
+                    <input id="nodeNameCreate"><br><br>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="createNodeFromPanel()">Create</button>
+                </div>
+            </div>
+            <!-- Selected node panel -->
+            <div class="row border border-warning m-2 p-2" id="selectedNodePanel" hidden="true">
+                <div class="col">
+                    <h4>Selected Node</h4>
+                    <hr>
+                    <h5>Node ID: <span id="selectedNodeId">asd</span></h5><br>
+                    <label for="nodeNameSelected">Node Name: </label>
+                    <input id="nodeNameSelected"><br><br>
+                    <label for="startNode">Start Node: </label>
+                    <input type="checkbox" id="startNode" name="startNode" value="1"><br><br>
+
+                    <button type="button" class="btn btn-primary btn-sm" onclick="updateNode()">Update</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="deleteNode_()">Delete</button>
+                </div>
+            </div>
+            <!-- Selected arc panel -->
+            <div class="row border border-warning m-2 p-2" id="selectedArcPanel" hidden="true">
+                <div class="col">
+                    <h4>Selected Arc</h4>
+                    <hr>
+                    <p>Arc ID: <span id="selectedArcId">*</span></p>
+                    <label for="probSelected">Probability:</label>
+                    <input id="probSelected" style="width:40px;"><br>
+                    <p>Position:</p>
+                    <input type="radio" id="pos1.25" name="direction" value="1.25">
+                    <input type="radio" id="pos1.50" name="direction" value="1.50">
+                    <input type="radio" id="pos1.75" name="direction" value="1.75"><br>
+                    <input type="radio" id="pos1.00" name="direction" value="1.0">
+                    <input type="radio" id="pos5" name="direction" value="male" disabled>
+                    <input type="radio" id="pos2.00" name="direction" value="2.0"><br>
+                    <input type="radio" id="pos0.75" name="direction" value="0.75">
+                    <input type="radio" id="pos0.50" name="direction" value="0.50">
+                    <input type="radio" id="pos0.25" name="direction" value="0.25">
+                    <br><br>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="updateArc()">Update</button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="deleteArc_()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<br><br>
+<div class="row m-0 p-0">
+    <div class="col">
+        <div class="row p-5 pt-0">
+            <table class="table border" id="nodesTable">
+                <thead>
+                <tr>
+                    <th scope="col">Node ID</th>
+                    <th scope="col">Node Name</th>
+                    <th scope="col">Count</th>
+                    <th scope="col">Rate</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col">
+        <div class="row p-5 pt-0">
+            <table class="table border" id="arcsTable">
+                <thead>
+                <tr>
+                    <th scope="col">Arc ID</th>
+                    <th scope="col">From</th>
+                    <th scope="col">To</th>
+                    <th scope="col">Arc Prob.</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+</body>
+
+<script src="static/markov.js"></script>
+<script>
+
+    const saveGraph = function () {
+        let jsonObj = {
+            'nodes': [],
+            'arcs': [],
+        }
+        for (let key in nodes) {
+            jsonObj['nodes'].push([key, nodes[key].pos_x, nodes[key].pos_y, nodes[key].name]);
+        }
+
+        for (let key in arcs) {
+            jsonObj['arcs'].push([
+                arcs[key].from.id,
+                arcs[key].to.id,
+                arcs[key].prob,
+                arcs[key].selfDirection,
+            ])
+        }
+        // source: https://stackoverflow.com/questions/36127648/uploading-a-json-file-and-using-it
+        let a = document.createElement("a");
+        let file = new Blob([JSON.stringify(jsonObj)], {type: 'text/plain'});
+        a.href = URL.createObjectURL(file);
+        a.download = "myMarkovChain.json";
+        a.click();
+    }
+
+
+    const loadGraph = function () {
+        let files = document.getElementById('markovFile').files;
+        if (files.length <= 0) {
+            return false;
+        }
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let result = JSON.parse(e.target.result);
+            let formatted = JSON.stringify(result, null, 2);
+            let translation = {}
+            for (let node of result['nodes']) {
+                let newId = createNode(node[3], node[1], node[2]);
+                translation[node[0]] = newId;
+            }
+
+            for (let arc of result['arcs']) {
+                createArc(
+                    translation[arc[0]],
+                    translation[arc[1]],
+                    arc[2],
+                    arc[3],
+                );
+            }
+        }
+        reader.readAsText(files.item(0));
+    }
+
+    const deleteNode_ = function () {
+        let nodeId = document.getElementById("selectedNodeId").innerText;
+        deleteNode(nodes[nodeId]);
+    }
+
+    const deleteArc_ = function () {
+        let arcId = document.getElementById("selectedArcId").innerText;
+        deleteArc(arcs[arcId]);
+    }
+
+    const startAnimation_ = function () {
+        if (!verifyStates()) {
+            return;
+        }
+        startAnimation();
+        document.getElementById("animButtonStart").hidden = true;
+        document.getElementById("animButtonStop").hidden = false;
+    }
+
+    const stopAnimation_ = function () {
+        stopAnimation();
+        document.getElementById("animButtonStart").hidden = false;
+        document.getElementById("animButtonStop").hidden = true;
+    };
+
+
+    $(document).ready(function () {
+        document.getElementById("sp3").checked = true;
+    });
+</script>
+</html>
